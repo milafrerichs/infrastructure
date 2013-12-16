@@ -454,3 +454,6 @@ class JSONTimetableMixin(object):
         return json.dumps(json_response)
 class ProjectDetailJSONView(JSONTimetableMixin, ProjectDetailView):
     pass
+
+class DistrictView(TemplateView):
+    template_name = 'districts.haml'

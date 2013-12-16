@@ -10,7 +10,7 @@ urlpatterns = patterns('',
     # Examples:
     # url(r'^$', 'infrastructure.views.home', name='home'),
     # url(r'^infrastructure/', include('infrastructure.foo.urls')),
-    url(r'^$',DashboardView.as_view(), name='index'), 
+    url(r'^$',DashboardView.as_view(), name='index'),
     url(r'^projects$',ProjectList.as_view(), name='projects'),
     url(r'^projects/(?P<phase>(design|planning|bid|construction|post-construction|completed))$',ProjectList.as_view(), name='phase_projects'),
     url(r'^projects/(?P<asset_type>(airports|buildings|storm-water-drainage|parks|transportation|sewer|water))$',ProjectList.as_view(), name='asset_type_projects'),
@@ -26,6 +26,8 @@ urlpatterns = patterns('',
     url(r'^project/(?P<slug>([A-Z0-9]*))$', ProjectDetailView.as_view(),name='project_detail'),
     url(r'^project/(?P<pk>\d+)/timetable.json$', ProjectDetailJSONView.as_view(),name='project_timetable'),
     url(r'^search/', include('haystack.urls')),
+
+    url(r'^districts', DistrictView.as_view(), name='districts'),
 
     url(r'^admin/', include(admin.site.urls)),
 )
