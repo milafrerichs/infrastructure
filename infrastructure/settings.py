@@ -116,6 +116,7 @@ class Common(Configuration):
         ('text/less', 'lessc {infile} {outfile}'),
         ('text/x-sass', 'sass {infile} {outfile}'),
         ('text/x-scss', 'sass --scss {infile} {outfile}'),
+        ('text/coffeescript', 'coffee --compile --stdio'),
     )
 
     ROOT_URLCONF = 'infrastructure.urls'
@@ -142,6 +143,7 @@ class Common(Configuration):
         'compressor',
         'django_select2',
         'jquery',
+        'djangular',
         'haystack',
         'infrastructure.cip',
     )
