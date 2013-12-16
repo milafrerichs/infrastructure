@@ -35,6 +35,47 @@ def show_project(request, p_id):
 
     return render_to_response('project.haml', {'project': project})
 
+
+class ProjectStat(object):
+    projects = []
+    def __init__(self,projects):
+        """docstring for __init__"""
+        self.projects = projects
+    def project_count(self):
+        """docstring for project_count"""
+        return self.projects.count()
+    def project_cost(self):
+        """docstring for project_cost"""
+        return self.projects.overall_cost()
+
+class DistrictStat(ProjectStat):
+    number = 0
+    councilmember = ''
+
+    def __init__(self,district_nr,projects):
+        """docstring for __init__"""
+        self.number = district_nr
+        self.projects = projects
+    def __dict__(self):
+        """docstring for __dict__"""
+        return {'number': self.number,'project_count':self.project_count(), 'project_costs': self.project_cost(), 'project_cost_money_string': intword(self.project_cost()) }
+
+class PhaseStat(ProjectStat):
+    title = ''
+    image_class = ''
+    def __init__(self,title,projects):
+        """docstring for __init__"""
+        self.title = title
+        self.projects = projects
+    def __dict__(self):
+        """docstring for __dict__"""
+        return {'title': self.title,'project_count':self.project_count(), 'project_costs': self.project_cost(), 'project_cost_money_string': intword(self.project_cost()) }
+
+
+class SubPhaseStat(ProjectStat):
+    title = ''
+    phase = ''
+
 class Widget():
     headline = ''
     value = ''
@@ -278,6 +319,55 @@ class ProjectsListListView(ProjectList):
             context['filter'] = pf.filter_set
             context['widgets'] = self.project_widgets(pf.filter_set)
         return render(request, self.template_name, context)
+
+class ProjectStatsView(TemplateView):
+    template_name="stats.haml"
+    def get_projects(self):
+        """docstring for get_projects"""
+        return Project.objects.all()
+    def get_stats(self):
+        """docstring for get_stats"""
+        stats = {}
+        stats["project_count"] = self.projects.count()
+        stats["project_cost"] = self.projects.overall_cost()
+        stats["phases"] = []
+        for (phase_class,phase) in PHASE_URLS:
+            phase_stat = PhaseStat(phase,self.projects.by_phase(phase))
+            stats["phases"].append({phase: phase_stat.__dict__() })
+        stats["asset_types"] = []
+        for (asset_type_class,asset_type) in ASSET_TYPE_URLS:
+            stats["asset_types"].append({asset_type: self.projects.by_asset_group(asset_type).count()})
+        stats["specific_asset_types"] = []
+        for (key,value) in ASSET_TYPE_CHOICES:
+            stats["specific_asset_types"].append({value: self.projects.by_asset_choice(key).count()})
+        stats["districts"] = {}
+        for district_nr in range(1,10):
+            district = DistrictStat(district_nr,self.projects.by_district(district_nr))
+            stats["districts"][district_nr] = district.__dict__()
+        return stats
+
+    def get_context_data(self, **kwargs):
+        context = super(ProjectStatsView, self).get_context_data(**kwargs)
+        self.projects = self.get_projects()
+        context["stats"] = self.get_stats()
+        return context
+class ProjectStatsJSONMixin(object):
+    def render_to_response(self, context):
+        "Returns a JSON response containing 'context' as payload"
+        return self.get_json_response(self.convert_context_to_json(context))
+
+    def get_json_response(self, content, **httpresponse_kwargs):
+        "Construct an `HttpResponse` object."
+        return django.http.HttpResponse(content,
+                                 content_type='application/json',
+                                 **httpresponse_kwargs)
+
+    def convert_context_to_json(self, context):
+        stats = context["stats"]
+        return json.dumps(stats)
+
+class ProjectStatsJSONView(ProjectStatsJSONMixin,ProjectStatsView):
+    pass
 
 class ProjectWidgets(object):
     def __init__(self):

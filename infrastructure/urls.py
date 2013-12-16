@@ -21,6 +21,8 @@ urlpatterns = patterns('',
     url(r'^projects/(?P<filter>\w+)/(?P<value>\w+(\s+\w+)*)/(?P<show>(all|current))$', ProjectList.as_view(), name='projects_list'),
     url(r'^projects/filter$', ProjectList.as_view(), name='filter_projects'),
     url(r'^projects_list$', ProjectsListListView.as_view(), name='projects_list'),
+    url(r'^projects/stats$', ProjectStatsView.as_view(), name='projects_stats'),
+    url(r'^projects/stats.json$', ProjectStatsJSONView.as_view(), name='projects_stats_json'),
 
     url(r'^project/(?P<pk>\d+)$', ProjectDetailView.as_view(),name='project_detail'),
     url(r'^project/(?P<slug>([A-Z0-9]*))$', ProjectDetailView.as_view(),name='project_detail'),
