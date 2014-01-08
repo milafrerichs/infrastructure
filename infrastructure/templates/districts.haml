@@ -1,0 +1,10 @@
+- extends "application.haml"
+- block content
+
+  %h1 Districts
+
+  #projects-per-district{"ng-controller": "DistrictStatsCtrl"}
+
+  %input{ type: "radio", name: "numbers", value: "count", checked:"checked", ng-model:"chart"} # Projects
+  %input{ type: "radio", name: "numbers", value: "costs", ng-model:"chart"} Project costs
+
