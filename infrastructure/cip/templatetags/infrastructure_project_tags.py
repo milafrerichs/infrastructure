@@ -17,7 +17,8 @@ phase_class = {
         'Post Construction' : 'post-construction',
         'Planning' : 'planning',
         'Bid and Award' : 'bid',
-        'Complete' : 'completed'
+        'Complete' : 'completed',
+        'Land Acquisition' : 'land'
         }
 phase_images = {
         'Design' : '234_brush',
@@ -34,7 +35,8 @@ asset_type_class = {
         'Parks' : 'parks',
         'Transportation' : 'transportation',
         'Sewer' : 'sewer',
-        'Water' : 'water'
+        'Water' : 'water',
+        'Landfill':'landfill'
         }
 
 asset_type_images = {
@@ -44,7 +46,8 @@ asset_type_images = {
         'Parks' : 'park2',
         'Transportation' : 'bus',
         'Sewer' : 'wetland',
-        'Water' : 'water'
+        'Water' : 'water',
+        'Landfill':'landfill'
         }
 @register.filter(needs_autoescape=True)
 def intword_span(value,autoescape=None):
@@ -98,7 +101,10 @@ def project_list_item(project):
     """docstring for project_list_item"""
     project_link_path = reverse('project_detail', args=[project.id] )
     asset_type_image = "images/icons/%s-18.png" % asset_type_images[project.SP_ASSET_TYPE_GROUP]
-    return { 'project' : project, 'link': project_link_path, 'phase': phase_class[project.SP_PROJECT_PHASE], 'asset_type_image': asset_type_image }
+    phase = ""
+    if project.SP_PROJECT_PHASE:
+        phase = phase_class[project.SP_PROJECT_PHASE]
+    return { 'project' : project, 'link': project_link_path, 'phase': phase, 'asset_type':asset_type_class[project.SP_ASSET_TYPE_GROUP]}
 
 @register.inclusion_tag('pagination.haml',takes_context=True)
 def pagination(context):
@@ -138,3 +144,31 @@ def widgets(context):
 def no_results():
     """docstring for no_results"""
     return
+
+@register.simple_tag
+def phase(project):
+    """docstring for asset_type"""
+    return phase_class[project.SP_PROJECT_PHASE]
+@register.simple_tag
+def asset_type(project):
+    """docstring for asset_type"""
+    return asset_type_class[project.SP_ASSET_TYPE_GROUP]
+@register.simple_tag
+def is_active_phase(project,test):
+    ph = phase(project)
+    return is_active(ph,test)
+@register.simple_tag
+def is_active(value,test):
+    """docstring for is_active"""
+    if value == test:
+        return " active"
+    else:
+        return ""
+
+@register.simple_tag
+def funded_class(project):
+    """docstring for funded_class"""
+    if project.SP_PROJECT_INFO_DESC == "Fully Funded":
+        return "full"
+    else:
+        return "partial"

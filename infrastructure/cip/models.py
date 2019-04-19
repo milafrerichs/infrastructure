@@ -83,9 +83,9 @@ class ProjectManagerMixin(object):
     def by_delivery_method(self,delivery_method):
         """docstring for by_asset_group"""
         return self.filter(SP_DELIVERY_METHOD_CD__istartswith=delivery_method)
-    def by_client_departement(self,client_departements):
+    def by_client_department(self,client_departments):
         """docstring for by_asset_group"""
-        return self.filter(SP_CLIENT2__istartswith=client_departements)
+        return self.filter(SP_CLIENT2__istartswith=client_departments)
     def by_project_cost(self,project_cost):
         """docstring for by_project_cost"""
         return self.get_query(project_cost)
@@ -376,13 +376,14 @@ class Phase(models.Model):
 class Project(models.Model):
     SP_SEQ_NUM = models.IntegerField()
     SP_DATA_DATE = models.DateField()
-    SP_SAPNO = models.CharField(max_length=8, null=True, blank=True)
+    SP_SAPNO = models.CharField(max_length=20, null=True, blank=True)
     SP_TYPE_CD = models.CharField(max_length=1, null=True, blank=True)
     SP_PROJECT_NM = models.CharField(max_length=512, null=True, blank=True)
     SP_SENIOR_NM = models.CharField(max_length=100, null=True, blank=True)
     SP_ASSET_TYPE_GROUP = models.CharField(max_length=100, null=True, blank=True)
     SP_ASSET_TYPE_CD = models.CharField(max_length=2, null=True, blank=True)
     SP_ASSET_TYPE_DESC = models.CharField(max_length=100, null=True, blank=True)
+    SP_FISCAL_YEAR = models.IntegerField(null=True, blank=True)
     SP_SAP_RUN_DT = models.DateField(null=True, blank=True)
     SP_PRELIM_ENGR_FINISH_DT= models.DateField(null=True, blank=True)
     SP_DESIGN_FINISH_DT = models.DateField(null=True, blank=True)
@@ -437,6 +438,7 @@ class Project(models.Model):
     SP_PROJECT_KIND2_DESC = models.CharField(max_length=100, null=True, blank=True)
     SP_BID_NUM = models.CharField(max_length=20, null=True, blank=True)
     SP_SPEC_NUM = models.CharField(max_length=20, null=True, blank=True)
+    geometry = models.TextField(null=True, blank=True)
 
     objects = ProjectManager()
     stats = ProjectsStatsManager()
@@ -479,7 +481,4 @@ class DepartmentNeed(models.Model):
     map_length = models.FloatField(null=True, blank=True)
     fci_percent = models.FloatField(null=True, blank=True)
     remarks = models.TextField(null=True, blank=True)
-
-
-
 

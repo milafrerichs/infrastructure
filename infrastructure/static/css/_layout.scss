@@ -1,0 +1,63 @@
+body {
+  margin:0;
+  padding: 0;
+}
+.main {
+  clear:both;
+  @include outer-container;
+}
+#sidebar-container {
+  @include span-columns(2);
+}
+#content-container {
+  @include span-columns(9);
+  @include pad();
+}
+#nav {
+  @include fill-parent;
+  @include clearfix;
+ }
+.nav {
+  @include outer-container;
+  @include clearfix;
+}
+
+.widget_row {
+  @include row();
+}
+
+#project {
+  #details {
+    @include span-columns(9 of 9);
+    #map {
+      @include span-columns(4 of 9);
+      margin-right: 0;
+    }
+    #main-details {
+      @include span-columns(5 of 9);
+      @include omega();
+    }
+  }
+  #description {
+    @include row();
+    @include span-columns(9 of 9);
+  }
+  #finance {
+    @include row(table);
+    #cost {
+      @include span-columns(4 of 9);
+    }
+    .divider{
+      @include span-columns(1 of 9);
+    }
+    #funding {
+      @include span-columns(4 of 9);
+    }
+  }
+  #timeline-container {
+    @include row();
+    @include span-columns(9 of 9);
+  }
+
+}
+

@@ -9,6 +9,8 @@ import json
 import django.http
 from django.contrib.humanize.templatetags.humanize import intword
 from infrastructure.cip.templatetags.infrastructure_project_tags import intword_span
+from rest_framework import viewsets
+from rest_framework import serializers
 
 def index(request):
     """docstring for projects"""
@@ -213,7 +215,8 @@ class ProjectList(ListView,ProjectsFilterMixin,ProjectWidgetMixin):
     context_object_name = 'projects'
     template_name = 'projects.haml'
     paginate_by = 20
-    form_data = {'dataset': 'all', 'order': 'SP_PRELIM_ENGR_START_DT'}
+    form_data = {'dataset': 'all', 'order': '-SP_PRELIM_ENGR_START_DT'}
+    filter_set = { 'order': dict(ORDER)[form_data['order']] }
 
     def timephase(self):
         """docstring for timephase"""
@@ -228,10 +231,11 @@ class ProjectList(ListView,ProjectsFilterMixin,ProjectWidgetMixin):
                 self.show['current'] = ''
                 self.show['all'] = 'active'
                 projects = Project.objects.all()
-        return projects.order_by('SP_PRELIM_ENGR_START_DT').exclude(SP_PRELIM_ENGR_START_DT=None)
+        return projects.order_by('-SP_PRELIM_ENGR_START_DT').exclude(SP_PRELIM_ENGR_START_DT=None)
     def reset_form_data(self):
         """docstring for reset_form_data"""
-        self.form_data = {'dataset': 'all', 'order': 'SP_PRELIM_ENGR_START_DT'}
+        self.form_data = {'dataset': 'all', 'order': '-SP_PRELIM_ENGR_START_DT'}
+        self.filter_set = { 'order': dict(ORDER)[self.form_data['order']] }
     def get_queryset(self):
         """docstring for get_queryset"""
         projects = []
@@ -242,17 +246,20 @@ class ProjectList(ListView,ProjectsFilterMixin,ProjectWidgetMixin):
             for key, value in dict(PROJECT_PHASES).items():
                 if value == dict(PHASE_URLS)[self.kwargs['phase']]:
                     self.form_data['current_phase'] = key
+                    self.filter_set['phase'] = value
         if self.kwargs.has_key('asset_type'):
             self.reset_form_data()
             self.filter('filter_by_asset_type',self.kwargs['asset_type'])
             for key, value in dict(ASSET_TYPE_GROUPS).items():
                 if value == dict(ASSET_TYPE_URLS)[self.kwargs['asset_type']]:
                     self.form_data['asset_type'] = key
+                    self.filter_set['asset_type'] = value
         if self.kwargs.has_key('district'):
             self.reset_form_data()
             self.filter('filter_by_district',self.kwargs['district'])
             self.form_data['district'] = self.kwargs['district']
-
+            self.filter_set['district'] = self.kwargs['district']
+        self.projects = self.projects.order_by('-SP_PRELIM_ENGR_START_DT').exclude(SP_PRELIM_ENGR_START_DT=None)
         return self.projects
 
     def get_context_data(self, **kwargs):
@@ -260,6 +267,7 @@ class ProjectList(ListView,ProjectsFilterMixin,ProjectWidgetMixin):
         context = super(ProjectList, self).get_context_data(**kwargs)
         context['form'] = ProjectFilterForm(self.form_data)
         context['widgets'] = self.project_widgets({})
+        context['filter'] = self.filter_set
         context['show'] = self.show
         return context
 
@@ -306,8 +314,8 @@ class ProjectFilter:
             self.order =  self.form.cleaned_data['order']
             self.filter_set = { 'order': dict(ORDER)[self.order] }
         else:
-            self.order = 'SP_PRELIM_ENGR_START_DT'
-            self.filter_set = {'order': 'SP_PRELIM_ENGR_START_DT'}
+            self.order = '-SP_PRELIM_ENGR_START_DT'
+            self.filter_set = {'order': '-SP_PRELIM_ENGR_START_DT'}
     def filter(self):
         """docstring for  filter_data"""
         if self.form.cleaned_data.has_key('current_phase') and self.form.cleaned_data['current_phase']:
@@ -319,7 +327,7 @@ class ProjectFilter:
         if self.form.cleaned_data.has_key('delivery_method') and self.form.cleaned_data['delivery_method']:
             self.delivery_methods()
         if self.form.cleaned_data.has_key('client_department') and self.form.cleaned_data['client_department']:
-            self.client_departements()
+            self.client_departments()
         if self.form.cleaned_data.has_key('project_cost') and self.form.cleaned_data['project_cost']:
             self.project_cost()
         if self.form.cleaned_data.has_key('district') and self.form.cleaned_data['district']:
@@ -348,11 +356,11 @@ class ProjectFilter:
         delivery_method = self.form.cleaned_data['delivery_method']
         delivery_methods = dict(DELIVERY_METHODS)
         self.projects = self.projects.by_delivery_method(delivery_methods[delivery_method])
-    def client_departements(self):
+    def client_departments(self):
         """docstring for asset_types"""
-        client_departement = self.form.cleaned_data['client_departement']
-        client_departements = dict(CLIENT_DEPARTMENTS)
-        self.projects = self.projects.by_client_departement(client_departements[client_departement])
+        client_department = self.form.cleaned_data['client_department']
+        client_departments = dict(CLIENT_DEPARTMENTS)
+        self.projects = self.projects.by_client_department(client_departments[client_department])
     def project_cost(self):
         """docstring for project_cost"""
         project_cost = self.form.cleaned_data['project_cost']
@@ -370,7 +378,7 @@ class ProjectFilterForm(forms.Form):
     choice_assets = tuple(default + list(ASSET_TYPE_GROUPS))
     choice_type_choices = tuple(default + list(ASSET_TYPE_CHOICES))
     choice_delivery_methods = tuple(default + list(DELIVERY_METHODS))
-    choice_client_departements = tuple(default + list(CLIENT_DEPARTMENTS))
+    choice_client_departments = tuple(default + list(CLIENT_DEPARTMENTS))
     project_costs = tuple(default + ProjectCosts().get_touples())
     choice_districts = tuple(default + Districts().get_touples())
 
@@ -383,7 +391,7 @@ class ProjectFilterForm(forms.Form):
     specific_asset_type = Select2ChoiceField(initial=2,
         choices=choice_type_choices,required=False)
     client_department = Select2ChoiceField(initial=2,
-        choices=choice_client_departements,required=False)
+        choices=choice_client_departments,required=False)
     delivery_method = Select2ChoiceField(initial=2,
         choices=choice_delivery_methods,required=False)
     district = Select2ChoiceField(initial=2,
@@ -454,3 +462,44 @@ class JSONTimetableMixin(object):
         return json.dumps(json_response)
 class ProjectDetailJSONView(JSONTimetableMixin, ProjectDetailView):
     pass
+
+asset_type_images = {
+        'Buildings': 'commercial',
+        'Airports' : 'airport',
+        'Storm Water Drainage' : 'telephone',
+        'Parks' : 'park2',
+        'Transportation' : 'bus',
+        'Sewer' : 'wetland',
+        'Water' : 'water',
+        'Landfill' : '',
+        }
+asset_type_colors = {
+        'Buildings': '#ccc',
+        'Airports' : '#b01517',
+        'Storm Water Drainage' : '#b0ae15',
+        'Parks' : '#65b015',
+        'Transportation' : '#1565b0',
+        'Sewer' : '#b06015',
+        'Water' : '#15b0ae',
+        'Landfill' : '',
+        }
+class ProjectSerializer(serializers.ModelSerializer):
+    asset_image= serializers.SerializerMethodField('asset_type_icon')
+    asset_color = serializers.SerializerMethodField('asset_type_color')
+
+    def asset_type_icon(self, object):
+        """docstring for asset_type"""
+        return asset_type_images[object.SP_ASSET_TYPE_GROUP]
+
+    def asset_type_color(self, object):
+        """docstring for asset_type"""
+        return asset_type_colors[object.SP_ASSET_TYPE_GROUP]
+
+    class Meta:
+        model = Project
+        fields = ('id', 'SP_PROJECT_NM', 'SP_PROJECT_PHASE', 'SP_ASSET_TYPE_GROUP','geometry','asset_image','asset_color')
+
+class ProjectViewSet(viewsets.ModelViewSet):
+    model = Project
+    serializer_class = ProjectSerializer
+
